@@ -268,7 +268,7 @@ class initialize_gan(APIView):
         
         end = time.time()
         response['status'] = 'ok'
-        response['prefix'] = str(start)
+        response['prefix'] = str(prefix)
         response['timetaken'] = str(end-start)
 
         return Response(response)
