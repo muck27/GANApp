@@ -240,9 +240,13 @@ def convert_images_to_uint8(images, drange=[-1,1], nchw_to_nhwc=False, shrink=1)
 
 class initialize_gan(APIView):
     def post(self,request):
+
+        total_images = request.data['images']
+        prefix = request.data['prefix']
         response = {}
         init_tf()
-        f =  open('/backend/gan3.pkl','rb')
+
+        f =  open('/backend/gan.pkl','rb')
         _G, _D, Gs = pickle.load(f)
     
         # Print network details.
@@ -254,13 +258,17 @@ class initialize_gan(APIView):
     
         # Generate image.
         fmt = dict(func=convert_images_to_uint8, nchw_to_nhwc=True)
+
         start = time.time()
-        images = Gs.run(latents, None, truncation_psi=0.7, randomize_noise=True, output_transform=fmt)
+        for count in range(int(total_images)):
+            images = Gs.run(latents, None, truncation_psi=0.7, randomize_noise=True, output_transform=fmt)
+            end = time.time()
+            png_filename = '/data/{}_{}.png'.format(prefix,count)
+            PIL.Image.fromarray(images[0], 'RGB').save(png_filename)
+        
         end = time.time()
-        print(end-start)
-        # Save image.
-        #os.makedirs(config.result_dir, exist_ok=True)
-        png_filename = 'example.png'
-        PIL.Image.fromarray(images[0], 'RGB').save(png_filename)
         response['status'] = 'ok'
+        response['prefix'] = str(start)
+        response['timetaken'] = str(end-start)
+
         return Response(response)
