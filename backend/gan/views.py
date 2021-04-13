@@ -243,6 +243,8 @@ class initialize_gan(APIView):
 
         total_images = request.data['images']
         prefix = request.data['prefix']
+        height = request.data['height']
+        width = request.data['width']
         response = {}
         init_tf()
 
@@ -265,6 +267,11 @@ class initialize_gan(APIView):
             end = time.time()
             png_filename = '/data/{}_{}.png'.format(prefix,count)
             PIL.Image.fromarray(images[0], 'RGB').save(png_filename)
+            im = PIL.Image.open(png_filename) 
+            im = im.resize((int(width),int(height)) ,  PIL.Image.ANTIALIAS)
+            os.remove(png_filename)
+            im.save(png_filename)
+
         
         end = time.time()
         response['status'] = 'ok'
