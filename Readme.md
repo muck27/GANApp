@@ -11,5 +11,6 @@
 	   "images":10,
            "prefix":"batch-1"
            "width":100,
-           "height":100,	
+           "height":100,
+           "seed":10000	
 	}

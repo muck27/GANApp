@@ -245,6 +245,7 @@ class initialize_gan(APIView):
         prefix = request.data['prefix']
         height = request.data['height']
         width = request.data['width']
+        seeds = request.data['seed']
         response = {}
         init_tf()
 
@@ -254,26 +255,28 @@ class initialize_gan(APIView):
         # Print network details.
         Gs.print_layers()
     
-        # Pick latent vector.
-        rnd = np.random.RandomState(5)
-        latents = rnd.randn(1, Gs.input_shape[1])
-    
         # Generate image.
-        fmt = dict(func=convert_images_to_uint8, nchw_to_nhwc=True)
-
+        synthesis_kwargs = dict(output_transform=dict(func=convert_images_to_uint8, nchw_to_nhwc=True), minibatch_size=8)
+        src_seeds = []
+        for _seed in range(int(total_images)):
+            src_seeds.append(seeds+_seed)
+        
+        src_latents = np.stack(np.random.RandomState(seed).randn(Gs.input_shape[1]) for seed in src_seeds)
+        src_dlatents = Gs.components.mapping.run(src_latents, None) # [seed, layer, component]
+        
         start = time.time()
-        for count in range(int(total_images)):
-            images = Gs.run(latents, None, truncation_psi=0.7, randomize_noise=True, output_transform=fmt)
-            end = time.time()
+        src_images = Gs.components.synthesis.run(src_dlatents, randomize_noise=False, **synthesis_kwargs)
+        end = time.time()
+
+        for count in range(len(src_images)):
             png_filename = '/data/{}_{}.png'.format(prefix,count)
-            PIL.Image.fromarray(images[0], 'RGB').save(png_filename)
+            PIL.Image.fromarray(src_images[count], 'RGB').save(png_filename)
             im = PIL.Image.open(png_filename) 
             im = im.resize((int(width),int(height)) ,  PIL.Image.ANTIALIAS)
             os.remove(png_filename)
             im.save(png_filename)
 
         
-        end = time.time()
         response['status'] = 'ok'
         response['prefix'] = str(prefix)
         response['timetaken'] = str(end-start)
