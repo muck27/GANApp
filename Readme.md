@@ -14,3 +14,5 @@
            "height":100,
            "seed":10000	
 	}
+
+7. Install dockerhub (https://hub.docker.com/editions/community/docker-ce-desktop-windows/)
